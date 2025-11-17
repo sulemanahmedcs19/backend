@@ -47,10 +47,6 @@ const AttendanceSchema = mongoose.Schema({
     ref: "Employee",
     required: [true, "Employee email is required"],
   },
-  empPassword: {
-    type: String,
-    required: [true, "Password is required"],
-  },
   CheckIn: {
     type: Date,
     default: Date.now,
