@@ -52,6 +52,7 @@ const checkIn = async (req, res) => {
 
     const attendance = new Attendance({
       email,
+      name: req.user.FName,
       CheckIn: now,
       Status: "Present",
       Remarks: remarks,
@@ -112,4 +113,23 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { loginOnly, checkIn, checkOut, logout };
+const getAllAttendance = async (req, res) => {
+  try {
+    const attendanceRecords = await Attendance.find().sort({ CheckIn: -1 }); // Latest first
+
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      return res.status(404).json({ message: "No attendance records found!" });
+    }
+
+    res.status(200).json({
+      message: "Attendance records fetched successfully",
+      attendance: attendanceRecords,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch attendance", error: error.message });
+  }
+};
+
+module.exports = { loginOnly, checkIn, checkOut, logout, getAllAttendance };

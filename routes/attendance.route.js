@@ -6,10 +6,12 @@ const {
   checkOut,
   loginOnly,
   logout,
+  getAllAttendance,
 } = require("../controllers/attendance.controller");
 
 // PUBLIC
 router.post("/loginOnly", loginOnly);
+router.get("/getAllAttendance", getAllAttendance);
 
 // PROTECTED
 router.post("/checkIn", auth, checkIn);
