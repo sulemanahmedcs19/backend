@@ -28,31 +28,54 @@ const loginOnly = async (req, res) => {
     res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
-
-// CHECK-IN
+//check-In
 const checkIn = async (req, res) => {
   try {
     const email = req.user.email;
     const now = new Date();
+    const hour = now.getHours();
+    const minutes = now.getMinutes();
 
-    // Check if already checked in today
+    // Allow only between 8PM–5AM
+    if (!(hour >= 20 || hour < 5)) {
+      return res
+        .status(400)
+        .json({ message: "Check-in allowed only between 8PM and 5AM" });
+    }
+
+    const shiftStart = new Date(now);
+    const shiftEnd = new Date(now);
+
+    if (hour < 5) {
+      shiftStart.setDate(now.getDate() - 1);
+    }
+
+    shiftStart.setHours(20, 0, 0, 0);
+
+    shiftEnd.setDate(shiftStart.getDate() + 1);
+    shiftEnd.setHours(19, 59, 59, 999);
+
     const existing = await Attendance.findOne({
       email,
-      CheckIn: {
-        $gte: new Date().setHours(0, 0, 0, 0),
-        $lte: new Date().setHours(23, 59, 59, 999),
-      },
+      CheckIn: { $gte: shiftStart, $lte: shiftEnd },
     });
 
-    if (existing)
-      return res.status(400).json({ message: "Already checked in today!" });
+    if (existing) {
+      return res
+        .status(400)
+        .json({ message: "Already checked in for this shift!" });
+    }
 
-    const remarks =
-      now.getHours() === 8 && now.getMinutes() <= 15 ? "On Time" : "Late";
+    if (hour === 20 && minutes <= 15) {
+      remarks = "On Time";
+    } else {
+      remarks = "Late";
+    }
 
+    // Check-in record
     const attendance = new Attendance({
       email,
-      name: req.user.FName,
+      name: req.user.name,
       CheckIn: now,
       Status: "Present",
       Remarks: remarks,
@@ -73,23 +96,38 @@ const checkIn = async (req, res) => {
 const checkOut = async (req, res) => {
   try {
     const email = req.user.email;
+    const now = new Date();
+    const hour = now.getHours();
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    // SHIFT WINDOW
+    const shiftStart = new Date(now);
+    const shiftEnd = new Date(now);
 
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    if (hour < 5) {
+      shiftStart.setDate(now.getDate() - 1); // previous day
+    }
 
+    shiftStart.setHours(20, 0, 0, 0); // 8 PM
+
+    // SHIFT END = NEXT DAY 7:59 PM
+    shiftEnd.setDate(shiftStart.getDate() + 1);
+    shiftEnd.setHours(19, 59, 59, 999);
+
+    // Find shift's check-in
     const record = await Attendance.findOne({
       email,
-      CheckIn: { $gte: todayStart, $lte: todayEnd },
+      CheckIn: { $gte: shiftStart, $lte: shiftEnd },
     });
 
-    if (!record)
-      return res.status(404).json({ message: "No Check-In found for today!" });
+    if (!record) {
+      return res
+        .status(404)
+        .json({ message: "No check-in found for this shift!" });
+    }
 
-    if (record.CheckOut)
+    if (record.CheckOut) {
       return res.status(400).json({ message: "Already checked out!" });
+    }
 
     record.CheckOut = new Date();
     await record.save();
