@@ -14,7 +14,7 @@ const loginOnly = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
 
     const token = jwt.sign(
-      { email: employee.email, id: employee._id },
+      { email: employee.email, id: employee._id, name: employee.FName },
       "SECRET_KEY",
       { expiresIn: "10h" }
     );
@@ -36,7 +36,7 @@ const checkIn = async (req, res) => {
     const hour = now.getHours();
     const minutes = now.getMinutes();
 
-    // Allow only between 8PM–5AM
+    // Check if within shift window (8PM to 5AM)
     if (!(hour >= 20 || hour < 5)) {
       return res
         .status(400)
@@ -51,7 +51,6 @@ const checkIn = async (req, res) => {
     }
 
     shiftStart.setHours(20, 0, 0, 0);
-
     shiftEnd.setDate(shiftStart.getDate() + 1);
     shiftEnd.setHours(19, 59, 59, 999);
 
@@ -66,13 +65,14 @@ const checkIn = async (req, res) => {
         .json({ message: "Already checked in for this shift!" });
     }
 
+    // Remarks calculation
+    let remarks;
     if (hour === 20 && minutes <= 15) {
       remarks = "On Time";
     } else {
       remarks = "Late";
     }
 
-    // Check-in record
     const attendance = new Attendance({
       email,
       name: req.user.name,
