@@ -36,21 +36,20 @@ const checkIn = async (req, res) => {
     const hour = now.getHours();
     const minutes = now.getMinutes();
 
+    // Shift: 8 PM to 5 AM
     if (!(hour >= 20 || hour < 5)) {
       return res
         .status(400)
         .json({ message: "Check-in allowed only between 8PM and 5AM" });
     }
 
+    // Determine shift start/end
     const shiftStart = new Date(now);
     const shiftEnd = new Date(now);
-
     if (hour < 5) {
       shiftStart.setDate(now.getDate() - 1);
     }
-
     shiftStart.setHours(20, 0, 0, 0);
-
     shiftEnd.setDate(shiftStart.getDate() + 1);
     shiftEnd.setHours(19, 59, 59, 999);
 
@@ -65,13 +64,10 @@ const checkIn = async (req, res) => {
         .json({ message: "Already checked in for this shift!" });
     }
 
-    if (hour === 20 && minutes <= 15) {
-      remarks = "On Time";
-    } else {
-      remarks = "Late";
-    }
+    // Remarks
+    let remarks = "Late";
+    if (hour === 20 && minutes <= 15) remarks = "On Time";
 
-    // Check-in record
     const attendance = new Attendance({
       email,
       name: req.user.name,
