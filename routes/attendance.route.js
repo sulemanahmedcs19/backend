@@ -17,5 +17,8 @@ router.get("/getAllAttendance", getAllAttendance);
 router.post("/checkIn", auth, checkIn);
 router.post("/checkOut", auth, checkOut);
 router.post("/logout", auth, logout);
+router.get("/checkToken", auth, (req, res) => {
+  res.status(200).json({ message: "Token valid" });
+});
 
 module.exports = router;
