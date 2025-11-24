@@ -42,7 +42,6 @@ const Employee = mongoose.model("Employee", EmployeeFormSchema);
 
 // Attendance Schema
 const AttendanceSchema = mongoose.Schema({
-  name: { type: String, ref: "Employee" },
   email: {
     type: String,
     ref: "Employee",
