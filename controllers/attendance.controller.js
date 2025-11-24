@@ -36,7 +36,7 @@ const checkIn = async (req, res) => {
     const hour = now.getHours();
     const minutes = now.getMinutes();
 
-    // Shift: 8 PM to 5 AM
+    // SHIFT: 8 PM to 5 AM
     if (!(hour >= 20 || hour < 5)) {
       return res
         .status(400)
@@ -47,11 +47,11 @@ const checkIn = async (req, res) => {
     const shiftStart = new Date(now);
     const shiftEnd = new Date(now);
     if (hour < 5) {
-      shiftStart.setDate(now.getDate() - 1);
+      shiftStart.setDate(now.getDate() - 1); // shift started previous day
     }
-    shiftStart.setHours(20, 0, 0, 0);
+    shiftStart.setHours(20, 0, 0, 0); // 8:00 PM
     shiftEnd.setDate(shiftStart.getDate() + 1);
-    shiftEnd.setHours(19, 59, 59, 999);
+    shiftEnd.setHours(4, 59, 59, 999); // 4:59 AM next day
 
     const existing = await Attendance.findOne({
       email,
@@ -66,7 +66,7 @@ const checkIn = async (req, res) => {
 
     // Remarks
     let remarks = "Late";
-    if (hour === 20 && minutes <= 15) remarks = "On Time";
+    if (hour === 20 && minutes <= 15) remarks = "On Time"; // 8:00 PM to 8:15 PM
 
     const attendance = new Attendance({
       email,
