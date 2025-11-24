@@ -14,7 +14,7 @@ const loginOnly = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
 
     const token = jwt.sign(
-      { email: employee.email, id: employee._id, name: employee.FName },
+      { email: employee.email, id: employee._id },
       "SECRET_KEY",
       { expiresIn: "10h" }
     );
@@ -41,6 +41,7 @@ const formatTime12Hour = (date) => {
 const checkIn = async (req, res) => {
   try {
     const email = req.user.email;
+
     const now = new Date();
     const hour = now.getHours();
     const minutes = now.getMinutes();
@@ -77,7 +78,7 @@ const checkIn = async (req, res) => {
 
     const attendance = new Attendance({
       email,
-      name: req.user.name,
+
       CheckIn: now,
       Status: "Present",
       Remarks: remarks,
