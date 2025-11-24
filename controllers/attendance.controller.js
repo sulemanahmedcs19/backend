@@ -29,6 +29,15 @@ const loginOnly = async (req, res) => {
   }
 };
 //check-In
+const formatTime12Hour = (date) => {
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+// CHECK-IN
 const checkIn = async (req, res) => {
   try {
     const email = req.user.email;
@@ -46,9 +55,7 @@ const checkIn = async (req, res) => {
     // Determine shift start/end
     const shiftStart = new Date(now);
     const shiftEnd = new Date(now);
-    if (hour < 5) {
-      shiftStart.setDate(now.getDate() - 1); // shift started previous day
-    }
+    if (hour < 5) shiftStart.setDate(now.getDate() - 1); // previous day
     shiftStart.setHours(20, 0, 0, 0); // 8:00 PM
     shiftEnd.setDate(shiftStart.getDate() + 1);
     shiftEnd.setHours(4, 59, 59, 999); // 4:59 AM next day
@@ -80,7 +87,10 @@ const checkIn = async (req, res) => {
 
     res.status(200).json({
       message: "Checked in successfully",
-      attendance,
+      attendance: {
+        ...attendance._doc,
+        CheckIn: formatTime12Hour(now), // 12-hour format
+      },
     });
   } catch (error) {
     res.status(500).json({ message: "Check-in failed", error: error.message });
@@ -98,17 +108,11 @@ const checkOut = async (req, res) => {
     const shiftStart = new Date(now);
     const shiftEnd = new Date(now);
 
-    if (hour < 5) {
-      shiftStart.setDate(now.getDate() - 1); // previous day
-    }
-
-    shiftStart.setHours(20, 0, 0, 0); // 8 PM
-
-    // SHIFT END = NEXT DAY 7:59 PM
+    if (hour < 5) shiftStart.setDate(now.getDate() - 1);
+    shiftStart.setHours(20, 0, 0, 0);
     shiftEnd.setDate(shiftStart.getDate() + 1);
     shiftEnd.setHours(19, 59, 59, 999);
 
-    // Find shift's check-in
     const record = await Attendance.findOne({
       email,
       CheckIn: { $gte: shiftStart, $lte: shiftEnd },
@@ -124,12 +128,12 @@ const checkOut = async (req, res) => {
       return res.status(400).json({ message: "Already checked out!" });
     }
 
-    record.CheckOut = new Date();
+    record.CheckOut = now;
     await record.save();
 
     res.status(200).json({
       message: "Checked out successfully",
-      checkOutTime: record.CheckOut.toLocaleTimeString(),
+      checkOutTime: formatTime12Hour(record.CheckOut), // 12-hour format
     });
   } catch (error) {
     res.status(500).json({ message: "Check-out failed", error: error.message });
