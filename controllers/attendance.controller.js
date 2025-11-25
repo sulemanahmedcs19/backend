@@ -8,7 +8,7 @@ const loginOnly = async (req, res) => {
 
     const ip_Check = "192.168.18.1";
 
-    if (ip !== ip_Check) {
+    if (!ip.startsWith(ip_Check)) {
       return res.status(403).json({
         message: "You must be connected to office WiFi to login",
       });
@@ -22,7 +22,7 @@ const loginOnly = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
 
     const token = jwt.sign(
-      { email: employee.email, id: employee._id, name: employee.name },
+      { email: employee.email, id: employee._id },
       "SECRET_KEY",
       { expiresIn: "10h" }
     );
@@ -37,43 +37,36 @@ const loginOnly = async (req, res) => {
   }
 };
 
-// ---------------------- PAKISTAN TIME HELPER ----------------------
-// Ab hum server ke local time pe depend nahi karenge
 function getPakistanTime(date) {
-  // Pakistan timezone ka local date/time return karega
   return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Karachi" }));
 }
 
 function getShiftWindow(now) {
-  const localNow = getPakistanTime(now); // Pakistan time
+  const localNow = getPakistanTime(now);
   const shiftStart = new Date(localNow);
   const shiftEnd = new Date(localNow);
 
-  // Shift start 8 PM
   shiftStart.setHours(20, 0, 0, 0);
 
-  // Agar current time < 5 AM, shift start previous day
   if (localNow.getHours() < 5) {
     shiftStart.setDate(shiftStart.getDate() - 1);
   }
 
-  // Shift end 5 AM next day
   shiftEnd.setDate(shiftStart.getDate() + 1);
   shiftEnd.setHours(5, 0, 0, 0);
 
   return { shiftStart, shiftEnd };
 }
 
-// ---------------------- CHECK-IN ----------------------
+//CHECK-IN
 const checkIn = async (req, res) => {
   try {
     const email = req.user.email;
     const now = new Date();
-    const localNow = getPakistanTime(now); // Pakistan ka local time
+    const localNow = getPakistanTime(now);
     const hour = localNow.getHours();
     const minutes = localNow.getMinutes();
 
-    // Sirf 8 PM - 5 AM check-in allowed
     if (!(hour >= 20 || hour < 5)) {
       return res
         .status(400)
@@ -113,12 +106,12 @@ const checkIn = async (req, res) => {
   }
 };
 
-// ---------------------- CHECK-OUT ----------------------
+//CHECK-OUT
 const checkOut = async (req, res) => {
   try {
     const email = req.user.email;
     const now = new Date();
-    const localNow = getPakistanTime(now); // Pakistan ka local time
+    const localNow = getPakistanTime(now);
 
     const { shiftStart, shiftEnd } = getShiftWindow(now);
 
@@ -151,7 +144,7 @@ const checkOut = async (req, res) => {
   }
 };
 
-// ---------------------- LOGOUT ----------------------
+//LOGOUT
 const logout = async (req, res) => {
   try {
     const email = req.user.email;
@@ -161,7 +154,7 @@ const logout = async (req, res) => {
   }
 };
 
-// ---------------------- GET ALL ATTENDANCE ----------------------
+//GET ALL ATTENDANCE
 const getAllAttendance = async (req, res) => {
   try {
     const records = await Attendance.find().sort({ CheckIn: -1 });
