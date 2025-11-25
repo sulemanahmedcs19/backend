@@ -30,6 +30,7 @@ const loginOnly = async (req, res) => {
 };
 
 // ---------------------- PAKISTAN TIME HELPER ----------------------
+// Ab hum server ke local time pe depend nahi karenge
 function getPakistanTime(date) {
   // Pakistan timezone ka local date/time return karega
   return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Karachi" }));
@@ -97,10 +98,7 @@ const checkIn = async (req, res) => {
 
     res.status(200).json({
       message: "Checked in successfully",
-      attendance: {
-        ...attendance._doc,
-        CheckIn: localNow.toLocaleTimeString("en-PK", { hour12: true }),
-      },
+      attendance,
     });
   } catch (error) {
     res.status(500).json({ message: "Check-in failed", error: error.message });
@@ -135,7 +133,9 @@ const checkOut = async (req, res) => {
     res.status(200).json({
       message: "Checked out successfully",
       checkOutTime: record.CheckOut.toLocaleTimeString("en-PK", {
-        hour12: true, // 12-hour format
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
       }),
     });
   } catch (error) {
@@ -162,18 +162,9 @@ const getAllAttendance = async (req, res) => {
       return res.status(404).json({ message: "No attendance records found!" });
     }
 
-    // Attendance list me CheckIn aur CheckOut dono ko 12-hour format me bheje
-    const formattedRecords = records.map((r) => ({
-      ...r._doc,
-      CheckIn: r.CheckIn.toLocaleTimeString("en-PK", { hour12: true }),
-      CheckOut: r.CheckOut
-        ? r.CheckOut.toLocaleTimeString("en-PK", { hour12: true })
-        : null,
-    }));
-
     res.status(200).json({
       message: "Attendance records fetched successfully",
-      attendance: formattedRecords,
+      attendance: records,
     });
   } catch (error) {
     res
