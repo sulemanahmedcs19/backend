@@ -4,7 +4,15 @@ const { Employee, Attendance } = require("../models/employeeForm");
 // ---------------------- LOGIN ----------------------
 const loginOnly = async (req, res) => {
   try {
-    const { email, empPassword } = req.body;
+    const { email, empPassword, ip } = req.body;
+
+    const ip_Check = "192.168.18.1";
+
+    if (ip !== ip_Check) {
+      return res.status(403).json({
+        message: "You must be connected to office WiFi to login",
+      });
+    }
 
     const employee = await Employee.findOne({ email });
     if (!employee)
