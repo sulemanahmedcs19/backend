@@ -63,7 +63,6 @@ const AttendanceSchema = mongoose.Schema({
     type: String,
     default: "",
   },
-  allowedIP: { type: String, default: "192.168.18.1" },
 });
 
 const Attendance = mongoose.model("Attendance", AttendanceSchema);
