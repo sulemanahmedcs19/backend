@@ -12,6 +12,15 @@ const loginOnly = async (req, res) => {
 
     if (employee.password !== empPassword)
       return res.status(401).json({ message: "Invalid password" });
+    // User ka current IP nikal lo
+    const userIP = req.ip || req.headers["x-forwarded-for"];
+
+    // Compare with saved allowed IP
+    if (employee.allowedIP !== userIP) {
+      return res
+        .status(403)
+        .json({ message: "Login not allowed from this network" });
+    }
 
     const token = jwt.sign(
       { email: employee.email, id: employee._id, name: employee.name },
