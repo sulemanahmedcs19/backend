@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { Employee, Attendance } = require("../models/employeeForm");
 
-// ---------------------- LOGIN ----------------------
+//LOGIN
 const loginOnly = async (req, res) => {
   try {
     const { email, empPassword, ip } = req.body;

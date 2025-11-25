@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { nanoid } = require("nanoid");
 
-// Employee Schema
+//Employee Schema
 const EmployeeFormSchema = mongoose.Schema({
   FName: { type: String, required: [true, "Full Name is required"] },
   DOB: { type: Date, required: [true, "Date of Birth is required"] },
