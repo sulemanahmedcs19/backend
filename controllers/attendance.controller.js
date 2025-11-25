@@ -30,8 +30,10 @@ const loginOnly = async (req, res) => {
 };
 
 // ---------------------- PAKISTAN TIME HELPER ----------------------
+// Ab hum server ke local time pe depend nahi karenge
 function getPakistanTime(date) {
-  return new Date(date.getTime() + 5 * 60 * 60 * 1000); // UTC +5
+  // Pakistan timezone ka local date/time return karega
+  return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Karachi" }));
 }
 
 function getShiftWindow(now) {
@@ -59,7 +61,7 @@ const checkIn = async (req, res) => {
   try {
     const email = req.user.email;
     const now = new Date();
-    const localNow = getPakistanTime(now);
+    const localNow = getPakistanTime(now); // Pakistan ka local time
     const hour = localNow.getHours();
     const minutes = localNow.getMinutes();
 
@@ -108,7 +110,7 @@ const checkOut = async (req, res) => {
   try {
     const email = req.user.email;
     const now = new Date();
-    const localNow = getPakistanTime(now);
+    const localNow = getPakistanTime(now); // Pakistan ka local time
 
     const { shiftStart, shiftEnd } = getShiftWindow(now);
 
