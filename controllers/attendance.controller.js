@@ -138,7 +138,7 @@ const checkOut = async (req, res) => {
     res.status(200).json({
       message: "Checked out successfully",
       checkOutTime: record.CheckOut.toLocaleTimeString("en-PK", {
-        hour12: false,
+        hour12: true,
         hour: "2-digit",
         minute: "2-digit",
       }),
