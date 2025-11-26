@@ -49,6 +49,7 @@ const AttendanceSchema = mongoose.Schema({
   },
   employeeName: {
     type: String,
+    required: true,
   },
   CheckIn: {
     type: Date,

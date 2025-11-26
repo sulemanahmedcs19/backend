@@ -95,7 +95,7 @@ const checkIn = async (req, res) => {
       email,
       employeeName: employee.FName,
       CheckIn: localNow,
-      Status: "Absent",
+      Status: "Pressent",
       Remarks: remarks,
     });
 
