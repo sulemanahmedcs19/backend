@@ -87,11 +87,15 @@ const checkIn = async (req, res) => {
 
     const remarks = hour === 20 && minutes <= 15 ? "On Time" : "Late";
 
+    const employee = await Employee.findOne({ email });
+    if (!employee)
+      return res.status(404).json({ message: "Employee not found!" });
+
     const attendance = new Attendance({
       email,
-      name: req.user.name,
+      employeeName: employee.FName,
       CheckIn: localNow,
-      Status: "Present",
+      Status: "Absent",
       Remarks: remarks,
     });
 
