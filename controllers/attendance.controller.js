@@ -1,187 +1,55 @@
-const jwt = require("jsonwebtoken");
-const { Employee, Attendance } = require("../models/employeeForm");
+import profileLogo from "../assets/sidebar/profile.png";
+import Admin from "../assets/sidebar/adminlogo.png";
+import Search from "../assets/sidebar/search.png";
 
-//LOGIN
-const loginOnly = async (req, res) => {
-  try {
-    const { email, empPassword, ip } = req.body;
+function Header() {
+  return (
+    <header className="w-full h-[65px] flex items-center bg-white shadow-md rounded-xl px-8 relative">
+      {/* LEFT SIDE BRAND */}
+      <div className="flex items-center gap-3 absolute left-8">
+        <h1 className="text-2xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+          ALPHA
+        </h1>
+        <img
+          src={profileLogo}
+          alt="logo"
+          className="w-[35px] h-[35px] rounded-full shadow-sm"
+        />
+      </div>
 
-    const ip_Check = "192.168.18.1";
+      {/* CENTER SEARCH BAR */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 w-[35%] h-[34px]">
+        <div className="relative w-full h-full">
+          <img
+            src={Search}
+            alt="search-icon"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-60"
+          />
 
-    if (!ip.startsWith(ip_Check)) {
-      return res.status(403).json({
-        message: "You must be connected to office WiFi to login",
-      });
-    }
+          <input
+            type="text"
+            placeholder="Search..."
+            className="w-full h-full pl-10 pr-4 rounded-full bg-gray-100 border 
+              border-gray-200 shadow-inner text-sm text-gray-600 
+              focus:ring-2 focus:ring-purple-400 focus:bg-white outline-none transition"
+          />
+        </div>
+      </div>
 
-    const employee = await Employee.findOne({ email });
-    if (!employee)
-      return res.status(404).json({ message: "Employee not found!" });
-
-    if (employee.password !== empPassword)
-      return res.status(401).json({ message: "Invalid password" });
-
-    const token = jwt.sign(
-      { email: employee.email, id: employee._id },
-      "SECRET_KEY",
-      { expiresIn: "10h" }
-    );
-
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      employee,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Login failed", error: error.message });
-  }
-};
-
-function getPakistanTime(date) {
-  return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Karachi" }));
+      {/* RIGHT SIDE ADMIN INFO */}
+      <div className="absolute right-8 flex items-center gap-3 cursor-pointer hover:opacity-90 transition">
+        <img
+          src={Admin}
+          alt="profile"
+          className="w-[40px] h-[40px] rounded-full shadow"
+        />
+        <div className="leading-tight">
+          <p className="text-[15px] font-semibold text-gray-800">Admin</p>
+          <p className="text-[13px] text-gray-500">Asifkhan@domain.ae</p>
+        </div>
+      </div>
+    </header>
+  );
 }
 
-function getShiftWindow(now) {
-  const localNow = getPakistanTime(now);
-  const shiftStart = new Date(localNow);
-  const shiftEnd = new Date(localNow);
-
-  shiftStart.setHours(20, 0, 0, 0);
-
-  if (localNow.getHours() < 5) {
-    shiftStart.setDate(shiftStart.getDate() - 1);
-  }
-
-  shiftEnd.setDate(shiftStart.getDate() + 1);
-  shiftEnd.setHours(5, 0, 0, 0);
-
-  return { shiftStart, shiftEnd };
-}
-
-//CHECK-IN
-const checkIn = async (req, res) => {
-  try {
-    const email = req.user.email;
-    const now = new Date();
-    const localNow = getPakistanTime(now);
-    const hour = localNow.getHours();
-    const minutes = localNow.getMinutes();
-
-    if (!(hour >= 20 || hour < 5)) {
-      return res
-        .status(400)
-        .json({ message: "Check-in allowed only between 8PM and 5AM" });
-    }
-
-    const { shiftStart, shiftEnd } = getShiftWindow(now);
-
-    const existing = await Attendance.findOne({
-      email,
-      CheckIn: { $gte: shiftStart, $lte: shiftEnd },
-    });
-
-    if (existing)
-      return res
-        .status(400)
-        .json({ message: "Already checked in for this shift!" });
-
-    const remarks = hour === 20 && minutes <= 15 ? "On Time" : "Late";
-
-    const employee = await Employee.findOne({ email });
-    if (!employee)
-      return res.status(404).json({ message: "Employee not found!" });
-
-    const attendance = new Attendance({
-      email,
-      employeeName: employee.FName,
-      CheckIn: localNow,
-      Status: "Pressent",
-      Remarks: remarks,
-    });
-
-    await attendance.save();
-
-    res.status(200).json({
-      message: "Checked in successfully",
-      attendance,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Check-in failed", error: error.message });
-  }
-};
-
-//CHECK-OUT
-const checkOut = async (req, res) => {
-  try {
-    const email = req.user.email;
-    const now = new Date();
-    const localNow = getPakistanTime(now);
-
-    const { shiftStart, shiftEnd } = getShiftWindow(now);
-
-    const record = await Attendance.findOne({
-      email,
-      CheckIn: { $gte: shiftStart, $lte: shiftEnd },
-    });
-
-    if (!record)
-      return res
-        .status(404)
-        .json({ message: "No check-in found for the current shift!" });
-
-    if (record.CheckOut)
-      return res.status(400).json({ message: "Already checked out!" });
-
-    record.CheckOut = localNow;
-    await record.save();
-
-    res.status(200).json({
-      message: "Checked out successfully",
-      checkOutTime: record.CheckOut.toLocaleTimeString("en-PK", {
-        hour12: true,
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Check-out failed", error: error.message });
-  }
-};
-
-//LOGOUT
-const logout = async (req, res) => {
-  try {
-    const email = req.user.email;
-    res.status(200).json({ message: `Logout successful for ${email}` });
-  } catch (error) {
-    res.status(500).json({ message: "Logout failed", error: error.message });
-  }
-};
-
-//GET ALL ATTENDANCE
-const getAllAttendance = async (req, res) => {
-  try {
-    const records = await Attendance.find().sort({ CheckIn: -1 });
-
-    if (!records || records.length === 0) {
-      return res.status(404).json({ message: "No attendance records found!" });
-    }
-
-    res.status(200).json({
-      message: "Attendance records fetched successfully",
-      attendance: records,
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch attendance", error: error.message });
-  }
-};
-
-module.exports = {
-  loginOnly,
-  checkIn,
-  checkOut,
-  logout,
-  getAllAttendance,
-};
+export default Header;
