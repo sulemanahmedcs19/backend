@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { Employee, Attendance } = require("../models/employeeForm");
 
-// LOGIN
+//LOGIN
 const loginOnly = async (req, res) => {
   try {
     const { email, empPassword, ip } = req.body;
@@ -37,12 +37,10 @@ const loginOnly = async (req, res) => {
   }
 };
 
-// PAKISTAN TIME
 function getPakistanTime(date) {
   return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Karachi" }));
 }
 
-// SHIFT WINDOW (8PM to 5AM)
 function getShiftWindow(now) {
   const localNow = getPakistanTime(now);
   const shiftStart = new Date(localNow);
@@ -60,11 +58,10 @@ function getShiftWindow(now) {
   return { shiftStart, shiftEnd };
 }
 
-// CHECK-IN
+//CHECK-IN
 const checkIn = async (req, res) => {
   try {
     const email = req.user.email;
-
     const now = new Date();
     const localNow = getPakistanTime(now);
     const hour = localNow.getHours();
@@ -83,11 +80,10 @@ const checkIn = async (req, res) => {
       CheckIn: { $gte: shiftStart, $lte: shiftEnd },
     });
 
-    if (existing) {
-      return res.status(400).json({
-        message: "Already checked in for this shift!",
-      });
-    }
+    if (existing)
+      return res
+        .status(400)
+        .json({ message: "Already checked in for this shift!" });
 
     const remarks = hour === 20 && minutes <= 15 ? "On Time" : "Late";
 
@@ -99,7 +95,7 @@ const checkIn = async (req, res) => {
       email,
       employeeName: employee.FName,
       CheckIn: localNow,
-      Status: "Present",
+      Status: "Pressent",
       Remarks: remarks,
     });
 
@@ -114,11 +110,10 @@ const checkIn = async (req, res) => {
   }
 };
 
-// CHECK-OUT
+//CHECK-OUT
 const checkOut = async (req, res) => {
   try {
     const email = req.user.email;
-
     const now = new Date();
     const localNow = getPakistanTime(now);
 
@@ -142,50 +137,18 @@ const checkOut = async (req, res) => {
 
     res.status(200).json({
       message: "Checked out successfully",
-      checkOutTime: record.CheckOut,
+      checkOutTime: record.CheckOut.toLocaleTimeString("en-PK", {
+        hour12: true,
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     });
   } catch (error) {
     res.status(500).json({ message: "Check-out failed", error: error.message });
   }
 };
 
-// 🆕 TODAY STATUS API
-const todayStatus = async (req, res) => {
-  try {
-    const email = req.user.email;
-
-    const now = new Date();
-    const { shiftStart, shiftEnd } = getShiftWindow(now);
-
-    const record = await Attendance.findOne({
-      email,
-      CheckIn: { $gte: shiftStart, $lte: shiftEnd },
-    });
-
-    if (!record) {
-      return res.status(200).json({
-        message: "No check-in yet",
-        checkedIn: false,
-        checkInTime: null,
-        checkOutTime: null,
-      });
-    }
-
-    return res.status(200).json({
-      message: "Today attendance loaded",
-      checkedIn: true,
-      checkInTime: record.CheckIn,
-      checkOutTime: record.CheckOut || null,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch today's status",
-      error: error.message,
-    });
-  }
-};
-
-// LOGOUT
+//LOGOUT
 const logout = async (req, res) => {
   try {
     const email = req.user.email;
@@ -195,7 +158,7 @@ const logout = async (req, res) => {
   }
 };
 
-// GET ALL ATTENDANCE
+//GET ALL ATTENDANCE
 const getAllAttendance = async (req, res) => {
   try {
     const records = await Attendance.find().sort({ CheckIn: -1 });
@@ -209,10 +172,9 @@ const getAllAttendance = async (req, res) => {
       attendance: records,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch attendance",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch attendance", error: error.message });
   }
 };
 
@@ -222,5 +184,4 @@ module.exports = {
   checkOut,
   logout,
   getAllAttendance,
-  todayStatus,
 };
