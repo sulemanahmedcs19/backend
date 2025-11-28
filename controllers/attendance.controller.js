@@ -6,7 +6,7 @@ const loginOnly = async (req, res) => {
   try {
     const { email, empPassword, ip } = req.body;
 
-    const ip_Check = ["192.168.18.1", "192.168.18.7"];
+    const ip_Check = ["192.168.18.1"];
 
     if (!ip.startsWith(ip_Check)) {
       return res.status(403).json({
