@@ -12,6 +12,7 @@ const {
 // PUBLIC
 router.post("/loginOnly", loginOnly);
 router.get("/getAllAttendance", getAllAttendance);
+router.get("/todayStatus", auth);
 
 // PROTECTED
 router.post("/checkIn", auth, checkIn);
