@@ -6,9 +6,9 @@ const loginOnly = async (req, res) => {
   try {
     const { email, empPassword, ip } = req.body;
 
-    const ip_Check = ["192.168.18.1"];
+    const ip_Check = ["192.168.18.1", "192.168.18.7"];
 
-    if (!ip.startsWith(ip_Check)) {
+    if (!ip_Check.includes(ip)) {
       return res.status(403).json({
         message: "You must be connected to office WiFi to login",
       });
